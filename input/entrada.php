@@ -1,58 +1,20 @@
 <?php
+namespace Util;
 
-namespace Parser;
+final class RelatorErros {
 
-use PhpParser\Lexer\Emulative;
-use PhpParser\Parser\Php7;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ErrorHandler\Collecting;
-use Analyser\DocTagger;
-use Throwable;
-
-class AstService {
-
-    public function map(string $sCode, int $iAddedLines = 0): array {
-        $oParser = new Php7(new Emulative());
-        $oErrors = new Collecting();
-
-        try {
-            $aAst = $oParser->parse($sCode, $oErrors);
-        } catch (Throwable $oError) {
-            $aAst = null;
-        }
-
-        $aErrorList = [];
-        foreach ($oErrors->getErrors() as $oError) {
-            $aErrorList[] = [
-                'message'   => $oError->getMessage(),
-                'startLine' => $oError->getStartLine(),
-                'endLine'   => $oError->getEndLine(),
-            ];
-        }
-
-        if ($aAst === null) {
-            if (empty($aErrorList)) {
-                $aErrorList[] = ['message' => 'Falha no parser.'];
-            }
-            return [[], $aErrorList];
-        }
-
-        $oTraverser = new NodeTraverser();
-        $oTraverser->addVisitor(new NameResolver());
-
-        $oTagger = new DocTagger();
-        $oTraverser->addVisitor($oTagger);
-        $oTraverser->traverse($aAst);
-        $iCount = count($oTagger->items);
-        for ($i = 0, $n = $iCount; $i < $n; $i++) {
-            foreach (['line', 'doc_start', 'doc_end'] as $k) {
-                if (isset($oTagger->items[$i][$k]) && is_int($oTagger->items[$i][$k])) {
-                    $oTagger->items[$i][$k] = max(1, $oTagger->items[$i][$k] - $iAddedLines);
-                }
-            }
-        }
-
-        return [$oTagger->items, $aErrorList];
+    /**
+     * Cria um diretório se ele não existir e grava um arquivo JSON com os erros fornecidos.
+     * 
+     * @param string $sDir O caminho do diretório onde o arquivo será salvo.
+     * @param array $aErros A lista de erros a serem gravados no arquivo JSON.
+     * @return void
+     */
+    public function escrever(string $sDir, array $aErros): void {
+        if (!is_dir($sDir)) mkdir($sDir, 0777, true);
+        file_put_contents(
+            rtrim($sDir, '/').'/errors.json',
+            json_encode($aErros, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
     }
 }

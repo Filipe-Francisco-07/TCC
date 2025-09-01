@@ -6,44 +6,70 @@ final class ConstrutorPrompt {
     public function construir(array $aItem, string $sCodigoContexto): string {
         $sTipo  = $aItem['type'] ?? 'desconhecido';
         $sFqn   = $aItem['fqn']  ?? ($aItem['name'] ?? '');
-        $iLinha = (int)($aItem['line'] ?? 1);
+        $iIniLn = (int)($aItem['line'] ?? 1);
+        $iFimLn = (int)($aItem['endLine'] ?? ($iIniLn + 1));
 
+        // corpo completo do elemento
         $aLinhas = preg_split('/\R/u', $sCodigoContexto);
-        $iIni    = max(0, $iLinha - 6);
-        $iFim    = min(count($aLinhas), $iLinha + 6);
-        $sTrecho = implode("\n", array_slice($aLinhas, $iIni, $iFim - $iIni));
+        $iIni0   = max(0, $iIniLn - 1);
+        $iFim0   = min(count($aLinhas), $iFimLn);
+        $sTrecho = implode("\n", array_slice($aLinhas, $iIni0, $iFim0 - $iIni0));
+
+        // metadados estruturais
+        $aMeta = [
+            'type'        => $sTipo,
+            'fqn'         => $sFqn,
+            'params'      => $aItem['params'] ?? [],
+            'returnType'  => $aItem['returnType'] ?? null,
+            'modificadores' => $aItem['modificadores'] ?? [],
+            'atributos'   => $aItem['atributos'] ?? [],
+            'heranca'     => $aItem['heranca'] ?? null,
+            'tipos_uso'   => $aItem['tipos_uso'] ?? [],
+            'operadores'  => $aItem['operadores'] ?? [],
+            'operacao_principal' => $aItem['operacao_principal'] ?? null,
+            'throws'      => $aItem['throws'] ?? [],
+            'efeitos'     => $aItem['efeitos_colaterais'] ?? [],
+            'retornos'    => $aItem['retornos'] ?? [],
+            'complexidade'=> $aItem['complexidade'] ?? [],
+            'checagens'   => $aItem['checagens'] ?? [],
+            'linhas'      => ['start'=>$iIniLn, 'end'=>$iFimLn, 'loc'=> max(1, $iFimLn - $iIniLn + 1)],
+            'chamadas'    => array_values(array_slice($aItem['chamadas'] ?? [], 0, 10)),
+        ];
+        $sMetaJson = json_encode($aMeta, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 
         $sAss = $sTipo.' '.$sFqn;
-
-        $sParams = '';
-        if (in_array($sTipo, ['function','method'], true)) {
-            $aParams = $aItem['params'] ?? [];
-            $sParams = implode(', ', array_map(
-                fn($p) => (($p['type'] ?? 'mixed').' '.($p['name'] ?? '')),
-                $aParams
-            ));
-        }
         $sRet = $aItem['returnType'] ?? 'mixed';
 
-        $sComum = "Gere apenas um DocBlock PHPDoc entre /** e */. Não use crases. Alvo: \"{$sAss}\" na linha {$iLinha}.";
-        $sTipoRegra = match ($sTipo) {
-            'function','method' => "- Descrição curta\n- Linha em branco\n- @param por parâmetro\n- @return {$sRet}\nSem @throws sem evidência.",
-            'class','interface','trait','enum' => "- Descrição curta\n- Opcional linha de responsabilidade\nSem @param/@return.",
-            'property' => "- Descrição curta\n- @var <tipo> descrição\nSem @param/@return.",
-            'constant' => "- Descrição curta\nSem @param/@return.",
-            default => "Descrição curta.",
+        $sRegras = match ($sTipo) {
+            'function','method' =>
+                "- Descreva objetivamente o que o corpo FAZ, não o nome.\n"
+                . "- Uma frase de descrição. Linha em branco.\n"
+                . "- @param para cada parâmetro na ordem, com propósito.\n"
+                . "- @return {$sRet} coerente com o corpo.\n"
+                . "- Não invente @throws. Só inclua se houver throw/declaração visível.",
+            'class','interface','trait','enum' =>
+                "- Papel/responsabilidade em 1–2 linhas. Sem @param/@return.",
+            'property' =>
+                "- Descrição curta. Use @var <tipo> descrição. Sem @param/@return.",
+            'constant' =>
+                "- Descrição curta. Sem @param/@return.",
+            default =>
+                "- Descrição curta baseada no corpo/metadata.",
         };
 
-        $sAssDet = in_array($sTipo, ['function','method'], true) ? "{$sAss}({$sParams})" : $sAss;
-
         return <<<PROMPT
-{$sComum}
+Gere APENAS um DocBlock PHPDoc válido entre /** e */. Não use crases.
+Se metadados e nomes divergirem do corpo, documente PELO CORPO.
 
-{$sTipoRegra}
+Alvo: {$sAss} (linhas {$iIniLn}-{$iFimLn})
 
-Assine para: {$sAssDet}
+REGRAS:
+{$sRegras}
 
-Trecho:
+METADADOS (JSON):
+{$sMetaJson}
+
+TRECHO DO CÓDIGO (início→fim do elemento):
 {$sTrecho}
 PROMPT;
     }
