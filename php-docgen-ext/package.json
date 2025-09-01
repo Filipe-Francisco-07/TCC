@@ -1,0 +1,56 @@
+{
+  "name": "php-docgen-runner",
+  "displayName": "PHP DocGen Runner",
+  "description": "Roda php bin/run.php, injeta input e aplica output/documentado.php no editor.",
+  "version": "0.0.2",
+  "publisher": "you",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:docgen.documentFile",
+    "onCommand:docgen.documentSelection"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "docgen.documentFile", "title": "Doc: Documentar arquivo atual" },
+      { "command": "docgen.documentSelection", "title": "Doc: Documentar seleção" }
+    ],
+    "menus": {
+      "editor/context": [
+        { "command": "docgen.documentFile", "group": "navigation@9" },
+        { "command": "docgen.documentSelection", "when": "editorHasSelection", "group": "navigation@9" }
+      ]
+    },
+    "configuration": {
+      "title": "PHP DocGen Runner",
+      "properties": {
+        "phpDocgen.phpPath": {
+          "type": "string",
+          "default": "php",
+          "description": "Caminho do PHP (ex.: C:\\\\php\\\\php.exe)."
+        },
+        "phpDocgen.projectRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Raiz do projeto que contém bin\\run.php. Se vazio, usa a raiz do workspace."
+        },
+        "phpDocgen.env.OPENAI_API_KEY": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "OPENAI_API_KEY a exportar para o run.php (opcional)."
+        },
+        "phpDocgen.env.OPENAI_MODEL": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "markdownDescription": "Modelo a usar (opcional)."
+        },
+        "phpDocgen.env.OPENAI_BASE": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Base URL da API (opcional)."
+        }
+      }
+    }
+  }
+}
