@@ -1,4 +1,0 @@
-{
-    "doc_1": "\/**\n * Class AstService\n * \n * Serviço responsável por analisar e mapear código fonte em uma estrutura de árvore sintática.\n *\/",
-    "doc_2": "\/**\n * Mapeia o código fonte para uma estrutura de árvore abstrata.\n * \n * @param string $sCode O código fonte a ser mapeado.\n * @param int $iAddedLines O número de linhas adicionadas ao código.\n * @return array A estrutura de árvore abstrata resultante do mapeamento.\n *\/"
-}
