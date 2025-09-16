@@ -1,0 +1,9 @@
+<phpdocumentor>
+  <paths><path>src</path></paths>
+  <target>docs</target>
+  <settings>
+    <ignore hidden="true" symlinks="true">
+      <paths><path>vendor</path><path>tests</path></paths>
+    </ignore>
+  </settings>
+</phpdocumentor>

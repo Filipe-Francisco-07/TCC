@@ -1,5 +1,8 @@
 {
   "require": { "nikic/php-parser": "^5.6" },
+  "replace": {
+    "herrera-io/json": "*"
+  },
   "autoload": {
     "psr-4": {
       "App\\": "src/",
@@ -8,5 +11,21 @@
       "Generator\\": "src/Generator/",
       "Analyser\\": "src/Analyser/"
     }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "*",
+    "friendsofphp/php-cs-fixer": "*",
+    "phpdocumentor/phpdocumentor": "*",
+    "phpunit/phpunit": "*",
+    "squizlabs/php_codesniffer": "4"
+  },
+
+  "scripts": {
+    "lint": "php -l input/entrada.php",
+    "cs:fix": "php-cs-fixer fix --using-cache=no",
+    "stan": "phpstan analyse src --level=max",
+    "docgen": "php bin/run.php",
+    "phpdoc": "phpDocumentor -d src -t docs",
+    "tests": "vendor/bin/phpunit"
   }
 }
