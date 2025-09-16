@@ -1,11 +1,15 @@
 <?php
+
 namespace Util;
 
-final class InjetorPlaceholder {
-
-    public function injetar(string $sArquivoEntrada, array $aMapa): string {
+final class InjetorPlaceholder
+{
+    public function injetar(string $sArquivoEntrada, array $aMapa): string
+    {
         $aLinhas = file($sArquivoEntrada);
-        if ($aLinhas === false) return '';
+        if ($aLinhas === false) {
+            return '';
+        }
 
         usort($aMapa, function (array $aA, array $aB): int {
             return ((int)($aB['line'] ?? 0)) <=> ((int)($aA['line'] ?? 0));

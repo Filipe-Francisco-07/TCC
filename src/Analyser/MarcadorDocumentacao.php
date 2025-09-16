@@ -1,4 +1,5 @@
 <?php
+
 namespace Analyser;
 
 use PhpParser\Comment\Doc;
@@ -6,7 +7,6 @@ use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
-
 // Stmts
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Interface_;
@@ -20,7 +20,6 @@ use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Throw_;
 use PhpParser\Node\Stmt\Echo_;
-
 // Exprs
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -69,12 +68,14 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
         }
 
         $sRotulo = $this->rotuloDe($oNo);
-        if ($sRotulo === null) return;
+        if ($sRotulo === null) {
+            return;
+        }
 
         $aEntrada = $this->entradaBase($sRotulo, $oNo);
 
         if ($oNo instanceof Node\FunctionLike) {
-            // Parâmetros e return type
+            // ParÃ¢metros e return type
             foreach ($oNo->getParams() as $oP) {
                 $aEntrada['params'][] = [
                     'name'        => '$' . $oP->var->name,
@@ -91,11 +92,13 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
 
             // Chamadas
             $aCalls = [];
-            foreach (array_merge(
-                $this->oFind->findInstanceOf($aStmts, FuncCall::class),
-                $this->oFind->findInstanceOf($aStmts, MethodCall::class),
-                $this->oFind->findInstanceOf($aStmts, StaticCall::class)
-            ) as $oC) {
+            foreach (
+                array_merge(
+                    $this->oFind->findInstanceOf($aStmts, FuncCall::class),
+                    $this->oFind->findInstanceOf($aStmts, MethodCall::class),
+                    $this->oFind->findInstanceOf($aStmts, StaticCall::class)
+                ) as $oC
+            ) {
                 if ($oC instanceof FuncCall && $oC->name instanceof Name) {
                     $aCalls[] = $oC->name->toString();
                 } elseif ($oC instanceof MethodCall && $oC->name instanceof Identifier) {
@@ -116,21 +119,28 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
 
             // --- EFEITOS COLATERAIS (sem prettyPrint global) -------------------
             $isPropTarget = static function ($var): bool {
-                while ($var instanceof ArrayDimFetch) { $var = $var->var; }
+                while ($var instanceof ArrayDimFetch) {
+                    $var = $var->var;
+                }
                 return $var instanceof PropertyFetch || $var instanceof StaticPropertyFetch;
             };
 
             $bAlteraEstado = false;
-            foreach (array_merge(
-                $this->oFind->findInstanceOf($aStmts, Assign::class),
-                $this->oFind->findInstanceOf($aStmts, AssignOp::class),
-                $this->oFind->findInstanceOf($aStmts, PreInc::class),
-                $this->oFind->findInstanceOf($aStmts, PostInc::class),
-                $this->oFind->findInstanceOf($aStmts, PreDec::class),
-                $this->oFind->findInstanceOf($aStmts, PostDec::class)
-            ) as $n) {
+            foreach (
+                array_merge(
+                    $this->oFind->findInstanceOf($aStmts, Assign::class),
+                    $this->oFind->findInstanceOf($aStmts, AssignOp::class),
+                    $this->oFind->findInstanceOf($aStmts, PreInc::class),
+                    $this->oFind->findInstanceOf($aStmts, PostInc::class),
+                    $this->oFind->findInstanceOf($aStmts, PreDec::class),
+                    $this->oFind->findInstanceOf($aStmts, PostDec::class)
+                ) as $n
+            ) {
                 $var = $n instanceof Assign || $n instanceof AssignOp ? $n->var : $n->var;
-                if ($isPropTarget($var)) { $bAlteraEstado = true; break; }
+                if ($isPropTarget($var)) {
+                    $bAlteraEstado = true;
+                    break;
+                }
             }
 
             $bUsaGlobais = !empty($this->oFind->find($aStmts, static function ($n) {
@@ -140,7 +150,9 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
             }));
 
             $bEscreveIO = !empty($this->oFind->find($aStmts, static function ($n) {
-                if ($n instanceof Echo_ || $n instanceof Print_) return true;
+                if ($n instanceof Echo_ || $n instanceof Print_) {
+                    return true;
+                }
                 if ($n instanceof FuncCall && $n->name instanceof Name) {
                     $s = strtolower($n->name->toString());
                     return in_array($s, ['printf','fprintf','file_put_contents','fwrite','error_log','var_dump'], true);
@@ -195,7 +207,7 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
                 'tipos_de_retorno_encontrados' => array_values(array_unique($aRetKinds)),
             ];
 
-            // Complexidade (por nós, não por string)
+            // Complexidade (por nÃ³s, nÃ£o por string)
             $aEntrada['complexidade'] = [
                 'if'      => count($this->oFind->findInstanceOf($aStmts, If_::class)),
                 'loops'   => count($this->oFind->find($aStmts, fn($n) => $n instanceof For_ || $n instanceof Foreach_ || $n instanceof While_ || $n instanceof Do_)),
@@ -204,14 +216,21 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
                 'match'   => count($this->oFind->findInstanceOf($aStmts, Match_::class)),
             ];
 
-            // Checagens comuns (por nós)
+            // Checagens comuns (por nÃ³s)
             $bDivZero = false;
             foreach ($this->oFind->findInstanceOf($aStmts, OpDiv::class) as $div) {
-                if ($div->right instanceof LNumber && $div->right->value === 0) { $bDivZero = true; break; }
+                if ($div->right instanceof LNumber && $div->right->value === 0) {
+                    $bDivZero = true;
+                    break;
+                }
             }
             $bNullChecks = !empty($this->oFind->find($aStmts, static function ($n) {
-                if ($n instanceof \PhpParser\Node\Expr\BinaryOp\Coalesce) return true;
-                if ($n instanceof FuncCall && $n->name instanceof Name && strtolower($n->name->toString()) === 'is_null') return true;
+                if ($n instanceof \PhpParser\Node\Expr\BinaryOp\Coalesce) {
+                    return true;
+                }
+                if ($n instanceof FuncCall && $n->name instanceof Name && strtolower($n->name->toString()) === 'is_null') {
+                    return true;
+                }
                 if ($n instanceof \PhpParser\Node\Expr\BinaryOp\Identical || $n instanceof \PhpParser\Node\Expr\BinaryOp\NotIdentical) {
                     return ($n->left instanceof \PhpParser\Node\Expr\ConstFetch && strtolower($n->left->name->toString()) === 'null')
                         || ($n->right instanceof \PhpParser\Node\Expr\ConstFetch && strtolower($n->right->name->toString()) === 'null');
@@ -232,19 +251,37 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
 
     public function leaveNode(Node $oNo): void
     {
-        if ($oNo instanceof Node\Stmt\ClassLike) array_pop($this->aPilhaClasse);
+        if ($oNo instanceof Node\Stmt\ClassLike) {
+            array_pop($this->aPilhaClasse);
+        }
     }
 
     private function rotuloDe(Node $oNo): ?string
     {
-        if ($oNo instanceof Node\Stmt\Class_)      return 'class';
-        if ($oNo instanceof Node\Stmt\Interface_)  return 'interface';
-        if ($oNo instanceof Node\Stmt\Trait_)      return 'trait';
-        if ($oNo instanceof Node\Stmt\Enum_)       return 'enum';
-        if ($oNo instanceof Node\Stmt\Function_)   return 'function';
-        if ($oNo instanceof Node\Stmt\ClassMethod) return 'method';
-        if ($oNo instanceof Node\Stmt\Property)    return 'property';
-        if ($oNo instanceof Node\Stmt\ClassConst)  return 'constant';
+        if ($oNo instanceof Node\Stmt\Class_) {
+            return 'class';
+        }
+        if ($oNo instanceof Node\Stmt\Interface_) {
+            return 'interface';
+        }
+        if ($oNo instanceof Node\Stmt\Trait_) {
+            return 'trait';
+        }
+        if ($oNo instanceof Node\Stmt\Enum_) {
+            return 'enum';
+        }
+        if ($oNo instanceof Node\Stmt\Function_) {
+            return 'function';
+        }
+        if ($oNo instanceof Node\Stmt\ClassMethod) {
+            return 'method';
+        }
+        if ($oNo instanceof Node\Stmt\Property) {
+            return 'property';
+        }
+        if ($oNo instanceof Node\Stmt\ClassConst) {
+            return 'constant';
+        }
         return null;
     }
 
@@ -281,12 +318,12 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
         }
 
         $aBase['modificadores'] = [
-            'public'    => method_exists($oNo,'isPublic')    ? $oNo->isPublic()    : false,
-            'protected' => method_exists($oNo,'isProtected') ? $oNo->isProtected() : false,
-            'private'   => method_exists($oNo,'isPrivate')   ? $oNo->isPrivate()   : false,
-            'static'    => method_exists($oNo,'isStatic')    ? $oNo->isStatic()    : false,
-            'final'     => method_exists($oNo,'isFinal')     ? $oNo->isFinal()     : false,
-            'abstract'  => method_exists($oNo,'isAbstract')  ? $oNo->isAbstract()  : false,
+            'public'    => method_exists($oNo, 'isPublic')    ? $oNo->isPublic()    : false,
+            'protected' => method_exists($oNo, 'isProtected') ? $oNo->isProtected() : false,
+            'private'   => method_exists($oNo, 'isPrivate')   ? $oNo->isPrivate()   : false,
+            'static'    => method_exists($oNo, 'isStatic')    ? $oNo->isStatic()    : false,
+            'final'     => method_exists($oNo, 'isFinal')     ? $oNo->isFinal()     : false,
+            'abstract'  => method_exists($oNo, 'isAbstract')  ? $oNo->isAbstract()  : false,
         ];
 
         foreach ($oNo->attrGroups ?? [] as $oG) {
@@ -300,8 +337,12 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
 
     private function nomeCurtoDe(Node $oNo): ?string
     {
-        if (property_exists($oNo, 'name') && $oNo->name instanceof Identifier) return $oNo->name->name;
-        if (property_exists($oNo, 'name') && $oNo->name instanceof Name)       return $oNo->name->toString();
+        if (property_exists($oNo, 'name') && $oNo->name instanceof Identifier) {
+            return $oNo->name->name;
+        }
+        if (property_exists($oNo, 'name') && $oNo->name instanceof Name) {
+            return $oNo->name->toString();
+        }
         return null;
     }
 
@@ -320,11 +361,21 @@ final class MarcadorDocumentacao extends NodeVisitorAbstract
 
     private function tipoParaString($mTipo): ?string
     {
-        if ($mTipo === null) return null;
-        if ($mTipo instanceof Node\NullableType)     return '?' . $this->tipoParaString($mTipo->type);
-        if ($mTipo instanceof Node\UnionType)        return implode('|', array_map(fn($t) => $this->tipoParaString($t), $mTipo->types));
-        if ($mTipo instanceof Node\IntersectionType) return implode('&', array_map(fn($t) => $this->tipoParaString($t), $mTipo->types));
-        if ($mTipo instanceof Identifier || $mTipo instanceof Name) return $mTipo->toString();
+        if ($mTipo === null) {
+            return null;
+        }
+        if ($mTipo instanceof Node\NullableType) {
+            return '?' . $this->tipoParaString($mTipo->type);
+        }
+        if ($mTipo instanceof Node\UnionType) {
+            return implode('|', array_map(fn($t) => $this->tipoParaString($t), $mTipo->types));
+        }
+        if ($mTipo instanceof Node\IntersectionType) {
+            return implode('&', array_map(fn($t) => $this->tipoParaString($t), $mTipo->types));
+        }
+        if ($mTipo instanceof Identifier || $mTipo instanceof Name) {
+            return $mTipo->toString();
+        }
         return (string)$mTipo;
     }
 }

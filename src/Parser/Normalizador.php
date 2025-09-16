@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Parser;
 
 final class Normalizador
@@ -11,7 +12,7 @@ final class Normalizador
     {
         $s = ltrim($raw);
 
-        // Já é arquivo PHP completo?
+        // JÃ¡ Ã© arquivo PHP completo?
         if (preg_match('/^\<\?php\b/u', $s)) {
             return [$raw, false, 0];
         }
@@ -19,8 +20,8 @@ final class Normalizador
         $linhasAdd = 0;
         $isFrag = true;
 
-        // Heurísticas simples de detecção
-        $startsWith = fn(string $re) => (bool)preg_match($re.'u', $s);
+        // HeurÃ­sticas simples de detecÃ§Ã£o
+        $startsWith = fn(string $re) => (bool)preg_match($re . 'u', $s);
 
         $wrapAsFile = function (string $body) use (&$linhasAdd): string {
             $prefix = "<?php\n";
@@ -42,7 +43,7 @@ final class Normalizador
             return $prefix . rtrim($method) . $suffix;
         };
 
-        // 1) Fragments que já parecem "arquivo" (namespace/declarações topo)
+        // 1) Fragments que jÃ¡ parecem "arquivo" (namespace/declaraÃ§Ãµes topo)
         if ($startsWith('/^(namespace\s+[A-Za-z0-9_\\\\]+;\s*)/')) {
             return [$wrapAsFile($s), true, $linhasAdd];
         }
@@ -53,23 +54,23 @@ final class Normalizador
             return [$wrapAsFile($s), true, $linhasAdd];
         }
         if ($startsWith('/^function\b/')) {
-            // Função solta é válida no topo do arquivo
+            // FunÃ§Ã£o solta Ã© vÃ¡lida no topo do arquivo
             return [$wrapAsFile($s), true, $linhasAdd];
         }
 
-        // 2) Método de classe selecionado (public/protected/private function …)
+        // 2) MÃ©todo de classe selecionado (public/protected/private function â€¦)
         if ($startsWith('/^(public|protected|private)\s+function\b/')) {
             return [$wrapAsClassMethod($s), true, $linhasAdd];
         }
 
-        // 3) Propriedade de classe selecionada (public/private/protected …;)
+        // 3) Propriedade de classe selecionada (public/private/protected â€¦;)
         if ($startsWith('/^(public|protected|private)\b/')) {
-            // ainda que não seja function, tratamos como trecho de classe
+            // ainda que nÃ£o seja function, tratamos como trecho de classe
             return [$wrapAsClassMethod($s), true, $linhasAdd];
         }
 
-        // 4) Só o corpo (bloco) — embrulhar como função temporária
-        // Heurística: contém ; ou {…} mas não declarações conhecidas
+        // 4) SÃ³ o corpo (bloco) â€” embrulhar como funÃ§Ã£o temporÃ¡ria
+        // HeurÃ­stica: contÃ©m ; ou {â€¦} mas nÃ£o declaraÃ§Ãµes conhecidas
         if ($startsWith('/[;{}]/')) {
             return [$wrapAsFunction($s), true, $linhasAdd];
         }

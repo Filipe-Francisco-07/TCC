@@ -1,9 +1,11 @@
 <?php
+
 namespace Generator;
 
-final class ConstrutorPrompt {
-
-    public function construir(array $aItem, string $sCodigoContexto): string {
+final class ConstrutorPrompt
+{
+    public function construir(array $aItem, string $sCodigoContexto): string
+    {
         $sTipo  = $aItem['type'] ?? 'desconhecido';
         $sFqn   = $aItem['fqn']  ?? ($aItem['name'] ?? '');
         $iIniLn = (int)($aItem['line'] ?? 1);
@@ -30,35 +32,35 @@ final class ConstrutorPrompt {
             'throws'      => $aItem['throws'] ?? [],
             'efeitos'     => $aItem['efeitos_colaterais'] ?? [],
             'retornos'    => $aItem['retornos'] ?? [],
-            'complexidade'=> $aItem['complexidade'] ?? [],
+            'complexidade' => $aItem['complexidade'] ?? [],
             'checagens'   => $aItem['checagens'] ?? [],
-            'linhas'      => ['start'=>$iIniLn, 'end'=>$iFimLn, 'loc'=> max(1, $iFimLn - $iIniLn + 1)],
+            'linhas'      => ['start' => $iIniLn, 'end' => $iFimLn, 'loc' => max(1, $iFimLn - $iIniLn + 1)],
             'chamadas'    => array_values(array_slice($aItem['chamadas'] ?? [], 0, 10)),
         ];
-        $sMetaJson = json_encode($aMeta, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+        $sMetaJson = json_encode($aMeta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $sAss = $sTipo.' '.$sFqn;
+        $sAss = $sTipo . ' ' . $sFqn;
         $sRet = $aItem['returnType'] ?? 'mixed';
 
         $sRegras = match ($sTipo) {
             'function','method' =>
-                "- Descreva objetivamente o que o corpo FAZ, não o nome.\n"
-                . "- Uma frase de descrição. Linha em branco.\n"
-                . "- @param para cada parâmetro na ordem, com propósito.\n"
+                "- Descreva objetivamente o que o corpo FAZ, nÃ£o o nome.\n"
+                . "- Uma frase de descriÃ§Ã£o. Linha em branco.\n"
+                . "- @param para cada parÃ¢metro na ordem, com propÃ³sito.\n"
                 . "- @return {$sRet} coerente com o corpo.\n"
-                . "- Não invente @throws. Só inclua se houver throw/declaração visível.",
+                . "- NÃ£o invente @throws. SÃ³ inclua se houver throw/declaraÃ§Ã£o visÃ­vel.",
             'class','interface','trait','enum' =>
-                "- Papel/responsabilidade em 1–2 linhas. Sem @param/@return.",
+                "- Papel/responsabilidade em 1â€“2 linhas. Sem @param/@return.",
             'property' =>
-                "- Descrição curta. Use @var <tipo> descrição. Sem @param/@return.",
+                "- DescriÃ§Ã£o curta. Use @var <tipo> descriÃ§Ã£o. Sem @param/@return.",
             'constant' =>
-                "- Descrição curta. Sem @param/@return.",
+                "- DescriÃ§Ã£o curta. Sem @param/@return.",
             default =>
-                "- Descrição curta baseada no corpo/metadata.",
+                "- DescriÃ§Ã£o curta baseada no corpo/metadata.",
         };
 
         return <<<PROMPT
-Gere APENAS um DocBlock PHPDoc válido entre /** e */. Não use crases.
+Gere APENAS um DocBlock PHPDoc vÃ¡lido entre /** e */. NÃ£o use crases.
 Se metadados e nomes divergirem do corpo, documente PELO CORPO.
 
 Alvo: {$sAss} (linhas {$iIniLn}-{$iFimLn})
@@ -69,7 +71,7 @@ REGRAS:
 METADADOS (JSON):
 {$sMetaJson}
 
-TRECHO DO CÓDIGO (início→fim do elemento):
+TRECHO DO CÃ“DIGO (inÃ­cioâ†’fim do elemento):
 {$sTrecho}
 PROMPT;
     }

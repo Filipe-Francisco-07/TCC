@@ -1,9 +1,11 @@
 <?php
+
 namespace Generator;
 
-final class AplicadorDocumentacao {
-
-    public function aplicar(string $sConteudo, array $aDocs): string {
+final class AplicadorDocumentacao
+{
+    public function aplicar(string $sConteudo, array $aDocs): string
+    {
         $sConteudo = str_replace("\r\n", "\n", $sConteudo);
         $aLinhas   = explode("\n", $sConteudo);
 
@@ -15,16 +17,20 @@ final class AplicadorDocumentacao {
                 continue;
             }
             $sId = $m[1];
-            if (!isset($aDocs[$sId])) continue;
+            if (!isset($aDocs[$sId])) {
+                continue;
+            }
 
-            // identação da própria linha do placeholder
+            // identaÃ§Ã£o da prÃ³pria linha do placeholder
             preg_match('/^([ \t]*)/', $sLinha, $mi);
             $sIndent = $mi[1] ?? '';
 
-            // fallback: identação da próxima linha útil
+            // fallback: identaÃ§Ã£o da prÃ³xima linha Ãºtil
             if ($sIndent === '' && $i + 1 < $iTotal) {
                 $j = $i + 1;
-                while ($j < $iTotal && trim($aLinhas[$j]) === '') { $j++; }
+                while ($j < $iTotal && trim($aLinhas[$j]) === '') {
+                    $j++;
+                }
                 if ($j < $iTotal && preg_match('/^([ \t]+)/', $aLinhas[$j], $mn)) {
                     $sIndent = $mn[1];
                 }
@@ -36,11 +42,12 @@ final class AplicadorDocumentacao {
         return implode("\n", $aLinhas);
     }
 
-    private function paraDocblockComIdentacao(string $sTexto, string $sIndent = ''): string {
+    private function paraDocblockComIdentacao(string $sTexto, string $sIndent = ''): string
+    {
         $sTexto = trim(str_replace("\r\n", "\n", $sTexto));
 
         if (!str_starts_with($sTexto, '/**')) {
-            $aLinhas = $sTexto === '' ? ['Documentação gerada.'] : explode("\n", $sTexto);
+            $aLinhas = $sTexto === '' ? ['DocumentaÃ§Ã£o gerada.'] : explode("\n", $sTexto);
             $aLinhas = array_map(fn($l) => ' * ' . ltrim(preg_replace('/^\*\s*/', '', $l)), $aLinhas);
             $sTexto  = "/**\n" . implode("\n", $aLinhas) . "\n */";
         }
