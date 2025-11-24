@@ -2,6 +2,10 @@
 
 namespace App\Parser;
 
+/**
+ * Classe responsável por normalizar trechos de código PHP, 
+ * identificando e formatando diferentes estruturas de código.
+ */
 final class Normalizador
 {
     /**
@@ -12,7 +16,6 @@ final class Normalizador
     {
         $s = ltrim($raw);
 
-        // JÃ¡ Ã© arquivo PHP completo?
         if (preg_match('/^\<\?php\b/u', $s)) {
             return [$raw, false, 0];
         }
@@ -20,8 +23,7 @@ final class Normalizador
         $linhasAdd = 0;
         $isFrag = true;
 
-        // HeurÃ­sticas simples de detecÃ§Ã£o
-        $startsWith = fn(string $re) => (bool)preg_match($re . 'u', $s);
+        $startsWith = fn (string $re) => (bool)preg_match($re . 'u', $s);
 
         $wrapAsFile = function (string $body) use (&$linhasAdd): string {
             $prefix = "<?php\n";

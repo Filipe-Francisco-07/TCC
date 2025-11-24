@@ -16,8 +16,8 @@ function getConfig() {
     }
   };
 }
-const oc = vscode.window.createOutputChannel('DocGen');
 
+const oc = vscode.window.createOutputChannel('DocGen');
 function pfix(p) { return p.replace(/\\/g, path.sep).replace(/\//g, path.sep); }
 
 async function runPhp(editor, isSelection) {
@@ -117,6 +117,57 @@ async function runPhp(editor, isSelection) {
   vscode.window.setStatusBarMessage('DocGen: arquivo documentado aplicado.', 3000);
 }
 
+// --- Nova Ação: Push para Git e disparar Workflow ---
+async function pushToGit() {
+  const ws = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+  if (!ws) {
+    vscode.window.showErrorMessage('Nenhum workspace aberto.');
+    return;
+  }
+
+  const commitMsg = await vscode.window.showInputBox({
+    prompt: 'Mensagem do commit',
+    value: 'ci: auto commit',
+    placeHolder: 'Digite a mensagem do commit...'
+  });
+
+  if (commitMsg === undefined) return; // Cancelado
+
+  oc.clear();
+  oc.appendLine('[PushToGit] Iniciando commit e push...');
+  oc.appendLine(`[PushToGit] Workspace: ${ws}`);
+  oc.show(true);
+
+  try {
+    // Obtém branch atual
+    const branch = cp.execSync('git rev-parse --abbrev-ref HEAD', { cwd: ws, encoding: 'utf8' }).trim();
+    oc.appendLine(`[PushToGit] Branch atual: ${branch}`);
+
+    // Adiciona todas as alterações
+    cp.execSync('git add -A', { cwd: ws, encoding: 'utf8' });
+    oc.appendLine('[PushToGit] Alterações adicionadas.');
+
+    // Faz o commit
+    try {
+      cp.execSync(`git commit -m "${commitMsg}"`, { cwd: ws, encoding: 'utf8' });
+      oc.appendLine(`[PushToGit] Commit realizado: "${commitMsg}"`);
+    } catch {
+      oc.appendLine('[PushToGit] Nenhuma alteração para commitar.');
+    }
+
+    // Faz o push e define upstream
+    oc.appendLine('[PushToGit] Enviando alterações para o repositório remoto...');
+    const pushOut = cp.execSync(`git push -u origin ${branch}`, { cwd: ws, encoding: 'utf8' });
+    oc.appendLine(pushOut);
+
+    vscode.window.showInformationMessage('Código enviado. Workflow de CI/CD iniciado no GitHub.');
+    oc.appendLine('[PushToGit] Workflow disparado com sucesso.');
+  } catch (err) {
+    oc.appendLine(`[PushToGit] Erro: ${err.message}`);
+    vscode.window.showErrorMessage('Erro ao enviar código. Veja o painel DocGen.');
+  }
+}
+
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('docgen.documentFile', async () => {
@@ -124,6 +175,7 @@ function activate(context) {
       if (!editor) return;
       await runPhp(editor, false);
     }),
+
     vscode.commands.registerCommand('docgen.documentSelection', async () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) return;
@@ -132,8 +184,13 @@ function activate(context) {
         return;
       }
       await runPhp(editor, true);
+    }),
+
+    vscode.commands.registerCommand('docgen.pushToGit', async () => {
+      await pushToGit();
     })
   );
 }
+
 function deactivate() {}
 module.exports = { activate, deactivate };

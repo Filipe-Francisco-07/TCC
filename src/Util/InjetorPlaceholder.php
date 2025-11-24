@@ -2,8 +2,14 @@
 
 namespace Util;
 
+
 final class InjetorPlaceholder
 {
+    /**
+     * Insere placeholders em um arquivo de entrada com base em um mapa de linhas e IDs.
+     * @param string $sArquivoEntrada O caminho do arquivo de entrada a ser processado.
+     * @return string O conteúdo do arquivo com os placeholders inseridos.
+     */
     public function injetar(string $sArquivoEntrada, array $aMapa): string
     {
         $aLinhas = file($sArquivoEntrada);

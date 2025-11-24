@@ -2,10 +2,19 @@
 
 namespace Generator;
 
-final class AplicadorDocumentacao
-{
-    public function aplicar(string $sConteudo, array $aDocs): string
-    {
+/**
+ * Classe responsável por aplicar documentação a partir de um conteúdo e um conjunto de documentos.
+ */
+final class AplicadorDocumentacao {
+
+    /**
+     * Processa o conteúdo fornecido, substituindo marcadores de documentação por suas respectivas representações em DocBlock.
+     * 
+     * @param string $sConteudo O conteúdo que contém os marcadores de documentação.
+     * @param array $aDocs Um array associativo que mapeia identificadores de documentação para suas representações.
+     * @return string O conteúdo processado com os DocBlocks inseridos.
+     */
+    public function aplicar(string $sConteudo, array $aDocs): string {
         $sConteudo = str_replace("\r\n", "\n", $sConteudo);
         $aLinhas   = explode("\n", $sConteudo);
 
@@ -20,12 +29,9 @@ final class AplicadorDocumentacao
             if (!isset($aDocs[$sId])) {
                 continue;
             }
-
-            // identaÃ§Ã£o da prÃ³pria linha do placeholder
             preg_match('/^([ \t]*)/', $sLinha, $mi);
             $sIndent = $mi[1] ?? '';
 
-            // fallback: identaÃ§Ã£o da prÃ³xima linha Ãºtil
             if ($sIndent === '' && $i + 1 < $iTotal) {
                 $j = $i + 1;
                 while ($j < $iTotal && trim($aLinhas[$j]) === '') {
@@ -38,21 +44,26 @@ final class AplicadorDocumentacao
 
             $aLinhas[$i] = $this->paraDocblockComIdentacao($aDocs[$sId], $sIndent);
         }
-
         return implode("\n", $aLinhas);
     }
 
-    private function paraDocblockComIdentacao(string $sTexto, string $sIndent = ''): string
-    {
+    /**
+     * Formata um texto em um DocBlock com a indentação especificada.
+     * 
+     * @param string $sTexto O texto a ser formatado como DocBlock.
+     * @param string $sIndent A string de indentação a ser aplicada a cada linha do DocBlock.
+     * @return string O texto formatado como DocBlock com a indentação aplicada.
+     */
+    private function paraDocblockComIdentacao(string $sTexto, string $sIndent = ''): string {
         $sTexto = trim(str_replace("\r\n", "\n", $sTexto));
 
         if (!str_starts_with($sTexto, '/**')) {
             $aLinhas = $sTexto === '' ? ['DocumentaÃ§Ã£o gerada.'] : explode("\n", $sTexto);
-            $aLinhas = array_map(fn($l) => ' * ' . ltrim(preg_replace('/^\*\s*/', '', $l)), $aLinhas);
+            $aLinhas = array_map(fn ($l) => ' * ' . ltrim(preg_replace('/^\*\s*/', '', $l)), $aLinhas);
             $sTexto  = "/**\n" . implode("\n", $aLinhas) . "\n */";
         }
 
-        $aOut = array_map(fn($l) => $sIndent . $l, explode("\n", $sTexto));
+        $aOut = array_map(fn ($l) => $sIndent . $l, explode("\n", $sTexto));
         return implode("\n", $aOut);
     }
 }

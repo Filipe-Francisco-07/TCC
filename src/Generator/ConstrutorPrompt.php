@@ -2,22 +2,31 @@
 
 namespace Generator;
 
-final class ConstrutorPrompt
-{
-    public function construir(array $aItem, string $sCodigoContexto): string
-    {
+/**
+ * Classe responsável por gerar DocBlocks PHPDoc a partir de informações fornecidas em um array e um contexto de código.
+ */
+final class ConstrutorPrompt {
+
+    /**
+     * Gera um DocBlock PHPDoc válido com base nas informações fornecidas.
+     * 
+     * Este método processa um item de array e um código de contexto, extraindo informações relevantes e formatando-as em um JSON.
+     * 
+     * @param array $aItem Informações do item, incluindo tipo, FQN, parâmetros e tipo de retorno.
+     * @param string $sCodigoContexto Código de contexto onde o item está localizado.
+     * @return string Retorna uma string formatada em JSON com os metadados do item.
+     */
+    public function construir(array $aItem, string $sCodigoContexto): string {
         $sTipo  = $aItem['type'] ?? 'desconhecido';
         $sFqn   = $aItem['fqn']  ?? ($aItem['name'] ?? '');
         $iIniLn = (int)($aItem['line'] ?? 1);
         $iFimLn = (int)($aItem['endLine'] ?? ($iIniLn + 1));
 
-        // corpo completo do elemento
         $aLinhas = preg_split('/\R/u', $sCodigoContexto);
         $iIni0   = max(0, $iIniLn - 1);
         $iFim0   = min(count($aLinhas), $iFimLn);
         $sTrecho = implode("\n", array_slice($aLinhas, $iIni0, $iFim0 - $iIni0));
 
-        // metadados estruturais
         $aMeta = [
             'type'        => $sTipo,
             'fqn'         => $sFqn,

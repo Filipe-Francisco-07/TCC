@@ -2,24 +2,52 @@
   "name": "php-docgen-runner",
   "displayName": "PHP DocGen Runner",
   "description": "Roda php bin/run.php, injeta input e aplica output/documentado.php no editor.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "you",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
   "activationEvents": [
     "onCommand:docgen.documentFile",
-    "onCommand:docgen.documentSelection"
+    "onCommand:docgen.documentSelection",
+    "onCommand:docgen.pushToGit"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
-      { "command": "docgen.documentFile", "title": "Doc: Documentar arquivo atual" },
-      { "command": "docgen.documentSelection", "title": "Doc: Documentar seleção" }
+      {
+        "command": "docgen.documentFile",
+        "title": "Doc: Documentar arquivo atual"
+      },
+      {
+        "command": "docgen.documentSelection",
+        "title": "Doc: Documentar seleção"
+      },
+      {
+        "command": "docgen.pushToGit",
+        "title": "Git: Subir código e disparar workflow"
+      }
     ],
     "menus": {
       "editor/context": [
-        { "command": "docgen.documentFile", "group": "navigation@9" },
-        { "command": "docgen.documentSelection", "when": "editorHasSelection", "group": "navigation@9" }
+        {
+          "command": "docgen.documentFile",
+          "group": "navigation@9"
+        },
+        {
+          "command": "docgen.documentSelection",
+          "when": "editorHasSelection",
+          "group": "navigation@9"
+        },
+        {
+          "command": "docgen.pushToGit",
+          "group": "navigation@10"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "docgen.pushToGit",
+          "when": "true"
+        }
       ]
     },
     "configuration": {
